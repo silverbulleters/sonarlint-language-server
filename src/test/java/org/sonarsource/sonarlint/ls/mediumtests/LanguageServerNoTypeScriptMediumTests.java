@@ -54,7 +54,7 @@ class LanguageServerNoTypeScriptMediumTests extends AbstractLanguageServerMedium
     List<Diagnostic> diagnostics = didOpenAndWaitForDiagnostics(uri, "javascript", "function foo() {\n  alert('toto');\n  var plouf = 0;\n}");
 
     assertThat(diagnostics)
-      .extracting("range.start.line", "range.start.character", "range.end.line", "range.end.character", "code", "source", "message", "severity")
+      .extracting("range.start.line", "range.start.character", "range.end.line", "range.end.character", "code.left", "source", "message", "severity")
       .containsExactlyInAnyOrder(
         tuple(1, 2, 1, 15, "javascript:S1442", "sonarlint", "Unexpected alert.", DiagnosticSeverity.Information),
         tuple(2, 6, 2, 11, "javascript:UnusedVariable", "sonarlint", "Remove the declaration of the unused 'plouf' variable.",
