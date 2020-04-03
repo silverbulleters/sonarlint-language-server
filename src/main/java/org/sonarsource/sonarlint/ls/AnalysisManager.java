@@ -19,9 +19,12 @@
  */
 package org.sonarsource.sonarlint.ls;
 
+import com.google.common.collect.ImmutableMap;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -206,6 +209,7 @@ public class AnalysisManager implements WorkspaceSettingsChangeListener {
   }
 
   private void analyze(URI fileUri, boolean shouldFetchServerIssues) {
+    Instant analysisTotalStart = Instant.now();
     final Optional<GetJavaConfigResponse> javaConfigOpt = getJavaConfigFromCacheOrFetch(fileUri);
     if (isJava(fileUri) && !javaConfigOpt.isPresent()) {
       LOG.debug("Skipping analysis of Java file '{}' because SonarLint was unable to query project configuration (classpath, source level, ...)", fileUri);
@@ -261,6 +265,9 @@ public class AnalysisManager implements WorkspaceSettingsChangeListener {
       LOG.info("Found {} issue(s)", files.values().stream().mapToInt(p -> p.getDiagnostics().size()).sum());
       files.values().forEach(client::publishDiagnostics);
     }
+    client.telemetryEvent(new TelemetryEvent("singleFileTotalAnalysisDuration", Duration.between(analysisTotalStart, Instant.now()).toMillis(),
+      ImmutableMap.of("languageId", Optional.ofNullable(languageIdPerFileURI.get(fileUri)).orElse("unknown"),
+        "issueCount", files.get(fileUri).getDiagnostics().size(), "jre", System.getProperty("java.version"))));
   }
 
   private Optional<GetJavaConfigResponse> getJavaConfigFromCacheOrFetch(URI fileUri) {
@@ -290,9 +297,9 @@ public class AnalysisManager implements WorkspaceSettingsChangeListener {
 
   static class AnalysisResultsWrapper {
     private final AnalysisResults results;
-    private final int analysisTime;
+    private final Duration analysisTime;
 
-    AnalysisResultsWrapper(AnalysisResults results, int analysisTime) {
+    AnalysisResultsWrapper(AnalysisResults results, Duration analysisTime) {
       this.results = results;
       this.analysisTime = analysisTime;
     }
@@ -345,7 +352,7 @@ public class AnalysisManager implements WorkspaceSettingsChangeListener {
    * @param postAnalysisTask Code that will be logged outside the analysis flag, but still counted in the total analysis duration.
    */
   private AnalysisResultsWrapper analyzeWithTiming(Supplier<AnalysisResults> analyze, Runnable postAnalysisTask) {
-    long start = System.currentTimeMillis();
+    Instant start = Instant.now();
     AnalysisResults analysisResults;
     try {
       lsLogOutput.setAnalysis(true);
@@ -356,8 +363,7 @@ public class AnalysisManager implements WorkspaceSettingsChangeListener {
 
     postAnalysisTask.run();
 
-    int analysisTime = (int) (System.currentTimeMillis() - start);
-    return new AnalysisResultsWrapper(analysisResults, analysisTime);
+    return new AnalysisResultsWrapper(analysisResults, Duration.between(start, Instant.now()));
   }
 
   private static String getFileRelativePath(Path baseDir, URI uri) {

@@ -22,6 +22,7 @@ package org.sonarsource.sonarlint.ls;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -143,9 +144,9 @@ public class SonarLintTelemetry implements WorkspaceSettingsChangeListener {
     }
   }
 
-  public void analysisDoneOnSingleFile(@Nullable String fileExtension, int analysisTimeMs) {
+  public void analysisDoneOnSingleFile(@Nullable String fileExtension, Duration analysisDuration) {
     if (enabled()) {
-      telemetry.analysisDoneOnSingleFile(fileExtension, analysisTimeMs);
+      telemetry.analysisDoneOnSingleFile(fileExtension, (int) analysisDuration.toMillis());
     }
   }
 

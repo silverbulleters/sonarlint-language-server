@@ -21,6 +21,7 @@ package org.sonarsource.sonarlint.ls;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -157,7 +158,7 @@ class SonarLintTelemetryTests {
   @Test
   public void analysisDoneOnSingleFile_should_trigger_analysisDoneOnSingleFile_when_enabled() {
     when(telemetryManager.isEnabled()).thenReturn(true);
-    telemetry.analysisDoneOnSingleFile("java", 1000);
+    telemetry.analysisDoneOnSingleFile("java", Duration.ofMillis(1000));
     verify(telemetryManager).isEnabled();
     verify(telemetryManager).analysisDoneOnSingleFile("java", 1000);
   }
@@ -165,7 +166,7 @@ class SonarLintTelemetryTests {
   @Test
   public void analysisDoneOnSingleFile_should_not_trigger_analysisDoneOnSingleFile_when_disabled() {
     when(telemetryManager.isEnabled()).thenReturn(false);
-    telemetry.analysisDoneOnSingleFile("java", 1000);
+    telemetry.analysisDoneOnSingleFile("java", Duration.ofMillis(1000));
     verify(telemetryManager).isEnabled();
     verifyNoMoreInteractions(telemetryManager);
   }
