@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
@@ -200,9 +201,18 @@ public class ProjectBindingManager implements WorkspaceSettingsChangeListener, W
   }
 
   public boolean usesSonarCloud() {
+    return hasAnyBindingThatMatch(ServerConnectionSettings::isSonarCloudAlias);
+  }
+
+  public boolean devNotificationsDisabled() {
+    return hasAnyBindingThatMatch(ServerConnectionSettings::isDevNotificationsDisabled);
+  }
+
+  private boolean hasAnyBindingThatMatch(Predicate<ServerConnectionSettings> predicate) {
     return Stream.concat(folderBindingCache.values().stream(), fileBindingCache.values().stream())
-      .flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty())
-      .anyMatch(binding -> settingsManager.getCurrentSettings().getServers().get(binding.getServerId()).isSonarCloudAlias());
+      .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+      .map(binding -> settingsManager.getCurrentSettings().getServers().get(binding.getServerId()))
+      .anyMatch(predicate);
   }
 
   @Override
@@ -214,8 +224,8 @@ public class ProjectBindingManager implements WorkspaceSettingsChangeListener, W
       unbind(folder);
     } else if (newValue.hasBinding()
       && (!Objects.equals(oldValue.getConnectionId(), newValue.getConnectionId()) || !Objects.equals(oldValue.getProjectKey(), newValue.getProjectKey()))) {
-        forceRebindDuringNextAnalysis(folder);
-      }
+      forceRebindDuringNextAnalysis(folder);
+    }
   }
 
   private void forceRebindDuringNextAnalysis(@Nullable WorkspaceFolderWrapper folder) {
@@ -296,7 +306,7 @@ public class ProjectBindingManager implements WorkspaceSettingsChangeListener, W
   }
 
   public void shutdown() {
-    connectedEngineCacheByServerId.entrySet().forEach(entry -> tryStopServer(entry.getKey(), entry.getValue()));
+    connectedEngineCacheByServerId.forEach(ProjectBindingManager::tryStopServer);
   }
 
   private static void tryStopServer(String serverId, Optional<ConnectedSonarLintEngine> engine) {
