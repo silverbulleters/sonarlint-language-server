@@ -23,7 +23,7 @@
   </issueManagement>
 
   <properties>
-    <sonarlint.core.version>4.14.1.22545</sonarlint.core.version>
+    <sonarlint.core.version>v4.14-bsl-SNAPSHOT</sonarlint.core.version>
     <!-- analyzers used for tests -->
     <sonar.java.version>6.5.0.22421</sonar.java.version>
     <sonar.javascript.version>6.2.1.12157</sonar.javascript.version>
@@ -35,6 +35,13 @@
     <artifactsToPublish>${project.groupId}:${project.artifactId}:jar</artifactsToPublish>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
+
   <dependencies>
     <!-- Java implementation of VS Code language server protocol -->
     <dependency>
@@ -43,7 +50,7 @@
       <version>0.9.0</version>
     </dependency>
     <dependency>
-      <groupId>org.sonarsource.sonarlint.core</groupId>
+      <groupId>com.github.silverbulleters.sonarlint-core</groupId>
       <artifactId>sonarlint-core</artifactId>
       <version>${sonarlint.core.version}</version>
     </dependency>
